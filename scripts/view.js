@@ -275,6 +275,10 @@
     draw_selection(selected_y, selected_x, width)
   }
 
+  inputs.mouse.addEventListener('change', () => {
+    set_if_mouse_controls(inputs.mouse.checked)
+  }, false)
+
   const get_shuffle_number = game => Math.max(200, 2 * (game.height + 1) * (game.width + 1) + 1);
 
   const animated_shuffle_handler = () => {
