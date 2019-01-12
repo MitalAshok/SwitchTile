@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Switchtile</title>
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" async="async">
+<style>
+body {
+  background: #EEEEEE;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+#content {
+  margin: auto;
+  background: #FEFEFE;
+  text-align: center;
+  font-family: 'Open Sans', sans-serif;
+}
+#title {
+  margin-top: 0;
+  padding-top: 1em;
+}
+#info {
+  padding-bottom: 2em;
+}
+#info button {
+  font-size: 1.2em;
+}
+#timer {
+  padding-top: 1em;
+}
+#game {
+  margin: auto;
+  background: #999999;
+  padding: 0;
+  position: relative;
+}
+.switchtile-tile {
+  position: absolute;
+}
+#selection {
+  display: block;
+  margin: auto;
+  padding: 0;
+  margin-bottom: 1.5em;
+  position: relative;
+}
+#selection span {
+  position: absolute;
+  box-shadow: 0 0 2px 3px lightblue;
+  background: white;
+}
+#left, #right {
+  width: 5px;
+  top: 0;
+  bottom: 0;
+}
+#top, #bottom {
+  height: 5px;
+  left: 0;
+  right: 0;
+}
+#help {
+  display: inline-block;
+  text-align: left;
+  padding-left: 3em;
+  padding-right: 1em;
+}
+#timer-minute, #timer-colon, #timer-second {
+  font-size: 2em;
+}
+#timer-ms {
+  font-size: 1.5em;
+}
+</style>
+<style id="size-style">
+#content {
+  max-width: 510px;
+}
+#game {
+  width: 500px;
+}
+#selection {
+  width: 500px;
+  margin-top: -500px;
+}
+</style>
+<style id="dynamic-style"></style>
+</head>
+<body>
+<div id="content">
+  <h1 id="title">SwitchTile</h1>
+  <p>A torus sliding puzzle</p>
+  <div id="info">
+    Width: <input type="number" min="1" max="50" step="1" name="width" id="width-input" value="3"><br>
+    Height: <input type="number" min="0" max="50" step="1" name="height" id="height-input" value="0"><br>
+    Size: <input type="number" min="100" name="size" id="size-input" value="500"><br>
+    <br>
+    <button onclick="window.b()">Reset</button>
+    <button onclick="window.s()">Shuffle</button><br>
+    <div id="timer"><span id="timer-minute"></span><span id="timer-colon" hidden="hidden">:</span><span id="timer-second">0</span><span id="timer-dot">.</span><span id="timer-ms">000</span></div>
+  </div>
+  <div id="game"></div><span id="selection"><span id="left"></span><span id="right"></span><span id="top"></span><span id="bottom"></span></span>
+  <div id="help">
+    <h2>Instructions</h2>
+    Set your width and height using the above controls and press reset to change the size.<br>
+    A height of 0 means that it will be a square. Note you generally want your width to be greater than your height.<br>
+    Pressing "shuffle" will (obviously) shuffle the tiles.<br><br>
+    Use the arrow keys to move the selection cross hair.<br>
+    Hold <kbd>Shift</kbd> and press an arrow key to move the tiles in the selection in that direction<br><br>
+    Try to get the board looking like it originally did. The time starts when you make your first move.
+  </div>
+  <br><br><br>
+</div>
+
+<script src="./scripts/controller.js"></script>
+<script src="./scripts/view.js"></script>
+</body>
+</html>
