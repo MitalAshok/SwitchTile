@@ -164,7 +164,7 @@
     const e = e_ || event
     const is_shift = e.getModifierState('Shift')
     let direction
-    switch (event.key) {
+    switch (e.key) {
       case 'ArrowUp':
         if (is_shift) {
           direction = D
