@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Switchtile</title>
+<title>SwitchTile</title>
 <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" async="async">
 <style>
 body {
@@ -29,11 +29,16 @@ body {
 #timer {
   padding-top: 1em;
 }
+.no-select {
+  color: transparent;
+}
 #game {
   margin: auto;
   background: #999999;
   padding: 0;
   position: relative;
+  border-color: #555555;
+  border-style: solid;
 }
 .switchtile-tile {
   position: absolute;
@@ -42,23 +47,36 @@ body {
   display: block;
   margin: auto;
   padding: 0;
-  margin-bottom: 1.5em;
   position: relative;
+  overflow: hidden;
 }
 #selection span {
   position: absolute;
   box-shadow: 0 0 2px 3px lightblue;
   background: white;
 }
+#selection[hidden] span {
+  display: none;
+}
 #left, #right {
-  width: 5px;
+  /* width: 5px; */
   top: 0;
   bottom: 0;
 }
 #top, #bottom {
-  height: 5px;
+  /* height: 5px; */
   left: 0;
   right: 0;
+}
+#hover-events {
+  display: block;
+  margin: auto;
+  padding: 0;
+  position: relative;
+  margin-bottom: 1.5em;
+}
+#hover-events span {
+  position: absolute;
 }
 #help {
   display: inline-block;
@@ -75,17 +93,42 @@ body {
 </style>
 <style id="size-style">
 #content {
-  max-width: 510px;
+  max-width: 520px;
 }
 #game {
   width: 500px;
+  border-width: 2.5px;
 }
 #selection {
   width: 500px;
-  margin-top: -500px;
+}
+#left, #right {
+  width: 10px;
+}
+#top, #bottom {
+  height: 20px;
 }
 </style>
-<style id="dynamic-style"></style>
+<style id="dynamic-style">
+.switchtile-tile {
+  width: 60px;
+}
+#game {
+  height: 200px;
+}
+#selection {
+  margin-top: -202.5px;
+  height: 200px;
+}
+#hover-events {
+  margin-top: -200px;
+  height: 200px;
+}
+#hover-events span {
+  width: 70px;
+  height: 70px;
+}
+</style>
 </head>
 <body>
 <div id="content">
@@ -94,21 +137,32 @@ body {
   <div id="info">
     Width: <input type="number" min="1" max="50" step="1" name="width" id="width-input" value="3"><br>
     Height: <input type="number" min="0" max="50" step="1" name="height" id="height-input" value="0"><br>
-    Size: <input type="number" min="100" name="size" id="size-input" value="500"><br>
+    Zoom: <input type="number" min="0.2" step="0.1" name="zoom" id="zoom-input" value="1"><br>
+    Mouse controls: <input type="checkbox" name="mouse-input" id="mouse-input"><br>
     <br>
     <button onclick="window.b()">Reset</button>
     <button onclick="window.s()">Shuffle</button><br>
     <div id="timer"><span id="timer-minute"></span><span id="timer-colon" hidden="hidden">:</span><span id="timer-second">0</span><span id="timer-dot">.</span><span id="timer-ms">000</span></div>
   </div>
-  <div id="game"></div><span id="selection"><span id="left"></span><span id="right"></span><span id="top"></span><span id="bottom"></span></span>
+  <div class="no-select" id="game"></div><span class="no-select" id="selection"><span id="left"></span><span id="right"></span><span id="top"></span><span id="bottom"></span></span><span id="hover-events"></span>
+  <div id="stats"><div id="moves"></div><br><div id="mps"></div></div>
   <div id="help">
     <h2>Instructions</h2>
     Set your width and height using the above controls and press reset to change the size.<br>
     A height of 0 means that it will be a square. Note you generally want your width to be greater than your height.<br>
     Pressing "shuffle" will (obviously) shuffle the tiles.<br><br>
+    <h3>Keyboard mode</h3>
     Use the arrow keys to move the selection cross hair.<br>
     Hold <kbd>Shift</kbd> and press an arrow key to move the tiles in the selection in that direction<br><br>
-    Try to get the board looking like it originally did. The time starts when you make your first move.
+    <h3>Mouse mode</h3>
+    Enable by ticking the "Mouse controls" box.<br>
+    Hover over a box and use the arrow keys to move the row or column that is selected.<br><br><br>
+    Try to get the board looking like it originally did. The time starts when you make your first move.<br><br>
+    <h3>Extras</h3>
+    <input type="checkbox" name="opt-anime" id="opt-anime"> Show animation when shuffling<br>
+    <input type="checkbox" name="opt-mouse-select" id="opt-mouse-select"> Show selection bars in mouse mode<br>
+    <input type="checkbox" name="opt-move" id="opt-move"> When moving in keyboard mode, move the selection with the tiles<br>
+    <input type="checkbox" name="opt-wrap" id="opt-wrap" checked="checked"> In keyboard mode, wrap around the selection<br>
   </div>
   <br><br><br>
 </div>

@@ -85,21 +85,24 @@
       }
       this.width = 0
       this.height = 0
-      this.tiles = []
+      this.tiles = null
       this.reset(height, width);
     }
     reset(height, width) {
       height = Number(height) || this.height
       width = Number(width) || this.width
-      if (reset_cache[height] === undefined) {
-        reset_cache[height] = []
-      } else if (reset_cache[height][width] !== undefined) {
-        this.set_to(reset_cache[height][width])
-        return
+      if (reset_cache[height] === undefined || reset_cache[height][width] === undefined) {
+        SwitchTile.precache(height, width)
       }
-      const tiles = this.tiles = Array
+      this.set_to(reset_cache[height][width])
+    }
+    static precache(height, width = height) {
+      if (reset_cache[height] !== undefined && reset_cache[height][width] !== undefined) return
+      height = +height
+      width = +width
+      const tiles = Array
         .apply(null, {length: height})
-        .map(() => Array.apply(null, {length: width}).map(() => 0));
+        .map(() => Array.apply(null, {length: width}).map(() => 0))
       for (let y = 0; y < height / 2; ++y) {
         for (let x = y; x < width - y; ++x) {
           tiles[y][x] |= UP_MASK
@@ -120,13 +123,14 @@
           tiles[y][x] |= RIGHT_MASK
         }
       }
-      this.tiles = tiles
-      this.height = height
-      this.width = width
-      reset_cache[height][width] = this.copy()
-    }
-    static precache(height, width = height) {
-      new this(height, width)
+      const cached = Object.create(SwitchTile.prototype)
+      cached.tiles = tiles
+      cached.height = height
+      cached.width = width
+      if (reset_cache[height] === undefined) {
+        reset_cache[height] = []
+      }
+      reset_cache[height][width] = cached
     }
     copy() {
       const copy = Object.create(SwitchTile.prototype)
@@ -145,25 +149,22 @@
       return copy
     }
     set_to(other) {
-      const tiles = this.tiles
+      const tiles = this.tiles || (this.tiles = Array(other.height))
       const o_tiles = other.tiles
       let y
       for (y = 0; y < other.height; ++y) {
-        if (y >= this.width) {
-          tiles[y] = Array(other.width)
-        }
-        const row = tiles[y]
+        const row = tiles[y] || (tiles[y] = Array(other.width))
         const o_row = o_tiles[y]
         let x
         for (x = 0; x < other.width; ++x) {
           row[x] = o_row[x]
         }
-        for (; x < this.width; ++x) {
+        for (; x < row.length; ++x) {
           delete row[x]
         }
         row.length = other.width
       }
-      for (; y < this.height; ++y) {
+      for (; y < tiles.length; ++y) {
         delete tiles[y]
       }
       tiles.length = other.height
@@ -194,15 +195,19 @@
         shuffle_2d_array(this.tiles, rng)
         return this
       } else {
-        const rand2dindex = rand2dindex_factory(this.height, this.width, rng)
-        const randchoice = randchoice_factory(rng)
-        // const randint = randint_factory(rng)
-
+        const shuffle = this.get_shuffler(rng)
         while (method-- > 0) {
-          const source = rand2dindex()
-          const direction = randchoice([UP_MASK, DOWN_MASK, LEFT_MASK, RIGHT_MASK])
-          this.move(source, direction)
+          shuffle()
         }
+      }
+    }
+    get_shuffler(rng = default_rng) {
+      const rand2dindex = rand2dindex_factory(this.height, this.width, rng)
+      const randchoice = randchoice_factory(rng)
+      return () => {
+        const source = rand2dindex()
+        const direction = randchoice([UP_MASK, DOWN_MASK, LEFT_MASK, RIGHT_MASK])
+        this.move(source, direction)
       }
     }
     move(source, direction, amount = 1) {

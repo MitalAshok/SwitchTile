@@ -1,19 +1,74 @@
 /* jshint bitwise: false, newcap: false, asi: true, eqnull: true, esversion: 6, expr: true */
 
 (() => {
-  const OPT_WRAP_SELECTION = true
-  const OPT_MOVE_SELECTION = false
-  const OPT_TIMER_REFRESH_INTERVAL = 1
+  const get_search_key = (location.search === '' || location.search === '?') ? (key => undefined) : (() => {
+    const search = location.search.slice(1).split('&')
+    const mapped = search.reduce(((acc, cur) => {
+      const split_index = cur.indexOf('=')
+      if (split_index === -1) {
+        const key = decodeURIComponent(cur)
+        acc['@@' + key] = null
+        return acc
+      }
+      const key = decodeURIComponent(cur.slice(0, split_index))
+      const value = decodeURIComponent(cur.slice(split_index + 1))
+      acc['@@' + key] = value
+      return acc
+    }), {})
+    return key => mapped['@@' + key]
+  })()
 
-  if (OPT_MOVE_SELECTION && !OPT_WRAP_SELECTION) {
-    alert('Incorrect configuration: If moving with selection, must also wrap.')
-    return
+  const search_not_set = key => get_search_key(key) === undefined
+  const search_set = key => get_search_key(key) !== undefined
+  const search_or_default = (key, default_ = null) => get_search_key(key) === undefined ? default_ : get_search_key(key)
+
+  let OPT_MOVE_SELECTION // = search_set('move')
+  let OPT_WRAP_SELECTION // = OPT_MOVE_SELECTION ? true : search_not_set('nowrap')
+  let OPT_TIMER_REFRESH_INTERVAL = +search_or_default('timer_referesh', 1) || 1
+  let OPT_DEFAULT_MARGIN_SIZE = +search_or_default('margin', 30) || 30
+  let OPT_DEFAULT_SIZE = +search_or_default('size', 500) || 500
+  let OPT_ANIMATED_SHUFFLE_HANDLER // = search_set('anime')
+  let OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS // = search_set('mouseselect')
+
+  const options = {
+    move: document.getElementById('opt-move'),
+    wrap: document.getElementById('opt-wrap'),
+    anime: document.getElementById('opt-anime'),
+    mouse_select: document.getElementById('opt-mouse-select')
   }
+
+  OPT_MOVE_SELECTION = !!options.move.checked
+  OPT_WRAP_SELECTION = !!options.wrap.checked
+  OPT_ANIMATED_SHUFFLE_HANDLER = !!options.anime.checked
+  OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS = !!options.mouse_select.checked
+
+  options.move.addEventListener('change', () => { OPT_MOVE_SELECTION = !!options.move.checked }, false)
+  options.wrap.addEventListener('change', () => { OPT_WRAP_SELECTION = !!options.wrap.checked }, false)
+  options.mouse_select.addEventListener('change', () => { OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS = !!options.mouse_select.checked }, false)
+
+  let currently_animated_shuffling = OPT_ANIMATED_SHUFFLE_HANDLER ? 0 : null
+  let selectiondiv_hidden = null
+
+  options.anime.addEventListener('change', () => {
+    if (options.anime.checked) {
+      OPT_ANIMATED_SHUFFLE_HANDLER = true
+      if (currently_animated_shuffling === null) {
+        currently_animated_shuffling = 0
+      }
+    } else {
+      OPT_ANIMATED_SHUFFLE_HANDLER = false
+      currently_animated_shuffling = null
+      if (selectiondiv_hidden !== null) {
+        selectiondiv.hidden = selectiondiv_hidden
+      }
+    }
+  }, false)
 
   const SwitchTile = window.SwitchTile
   if (SwitchTile === undefined) {
     return
   }
+
   const U = SwitchTile.UP_MASK
   const D = SwitchTile.DOWN_MASK
   const L = SwitchTile.LEFT_MASK
@@ -25,10 +80,12 @@
   const inputs = {
     height: document.getElementById('height-input'),
     width: document.getElementById('width-input'),
-    size: document.getElementById('size-input')
+    zoom: document.getElementById('zoom-input'),
+    mouse: document.getElementById('mouse-input')
   }
   const gamediv = document.getElementById('game')
-  // const selectiondiv = document.getElementById('selection')
+  const selectiondiv = document.getElementById('selection')
+  const hovereventsdiv = document.getElementById('hover-events')
   const selectionlines = {
     left: document.getElementById('left'),
     right: document.getElementById('right'),
@@ -37,59 +94,109 @@
   }
   const style = document.getElementById('dynamic-style')
   const size_style = document.getElementById('size-style')
-  let size = 500
+  let margin = OPT_DEFAULT_MARGIN_SIZE
+  let zoom = 1
+  let size = OPT_DEFAULT_SIZE
+  let mouse_controls = false
 
   const set_size = to => {
     size = to
     size_style.textContent = (
-      '#content{max-width:' + (to + 10) + 'px}' +
-      '#game{width:' + to + 'px}' +
-      '#selection{width:' + to + 'px}'
+      '#content{max-width:' + (to + 4 * margin) + 'px}' +
+      '#game{width:' + to + 'px;border-width:' + (0.5 * margin) + 'px}' +
+      '#selection,#hover-events{width:' + to + 'px}' +
+      '#left,#right{width:' + (2 * margin) + 'px}' +
+      '#top,#bottom{height:' + (2 * margin) + 'px}'
     )
   }
 
+  const set_if_mouse_controls = to => {
+    mouse_controls = !!to
+    if (!OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS) selectiondiv.hidden = !!to
+  }
+
+  const get_tile_width = width => (size - (width + 1) * margin) / width
+
   const set_style = (height, width) => {
-    // required_width * width + (width + 1) * 5px = size px
-    // required_width = (size px - (width + 1) * 5px) / width
-    const required_width = (size - (width + 1) * 5) / width
-    const div_height = (height * required_width + (height + 1) * 5)
+    // tile_width * width + (width + 1) * margin px = size px
+    // tile_width = (size px - (width + 1) * margin px) / width
+    const tile_width = get_tile_width(width)
+    const div_height = (height * tile_width + (height + 1) * margin)
     style.textContent =
-      '.switchtile-tile{width:' + required_width + 'px}' +
+      '.switchtile-tile{width:' + tile_width + 'px}' +
       '#game{height:' + div_height + 'px}' +
-      '#selection{margin-top:-' + div_height + 'px;height:' + div_height + 'px}'
+      '#selection{margin-top:-' + (div_height + 0.5 * margin) + 'px;height:' + div_height + 'px}' +
+      '#hover-events{margin-top:-' + div_height + 'px;height:' + div_height + 'px}' +
+      '#hover-events span{width:' + (tile_width + margin) + 'px;height:' + (tile_width + margin) + 'px}'
+  }
+
+  const kill_children = node => {
+    let last_child
+    while ((last_child = node.lastChild)) node.removeChild(last_child)
   }
 
   const draw_game = switchtile => {
     // debugger
-    let last_child
-    while ((last_child = gamediv.lastChild)) gamediv.removeChild(last_child)
     const fragment = document.createDocumentFragment()
     const height = switchtile.height
     const width = switchtile.width
-    const tile_width = (size - (width + 1) * 5) / width
+    const tile_width = get_tile_width(width)
     for (let y = 0; y < height; ++y) {
       const row = switchtile.tiles[y]
       for (let x = 0; x < width; ++x) {
         const tile = images[row[x]]()
         tile.setAttribute('style',
-          'top:' + (5 * (y + 1) + tile_width * y) + 'px;left:' +
-          (5 * (x + 1) + tile_width * x) + 'px'
+          'top:' + (margin * (y + 1) + tile_width * y) + 'px;left:' +
+          (margin * (x + 1) + tile_width * x) + 'px'
         )
         //tile.setAttribute('style', 'top: 5px;left:5px')
         fragment.appendChild(tile)
       }
     }
+    // gamediv.hidden = true
+    kill_children(gamediv)
     gamediv.appendChild(fragment)
+    // gamediv.hidden = false
   }
 
   const draw_selection = (selected_y, selected_x, width) => {
-    const tile_width = (size - (width + 1) * 5) / width
-    const l_offset = 5 * selected_x + tile_width * selected_x
-    const t_offset = 5 * selected_y + tile_width * selected_y
+    if (mouse_controls && (!OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS || (selectiondiv.hidden = selected_y === null))) {
+      return
+    }
+    const tile_width = get_tile_width(width)
+    const l_offset = margin * selected_x + tile_width * selected_x
+    const t_offset = margin * selected_y + tile_width * selected_y
     selectionlines.left.style = 'left:' + l_offset + 'px'
-    selectionlines.right.style = 'left:' + (l_offset + tile_width) + 'px'
+    selectionlines.right.style = 'left:' + (l_offset + tile_width + margin) + 'px'
     selectionlines.top.style = 'top:' + t_offset + 'px'
-    selectionlines.bottom.style = 'top:' + (t_offset + tile_width) + 'px'
+    selectionlines.bottom.style = 'top:' + (t_offset + tile_width + margin) + 'px'
+  }
+
+  const create_hitboxes = (height, width) => {
+    const tile_width = get_tile_width(width)
+
+    const create_hitbox = (y, x) => {
+      const hitbox = document.createElement('span')
+      hitbox.style = 'left:' + (0.5 * margin + (margin + tile_width) * x) + 'px;top:' + (0.5 * margin + (margin + tile_width) * y) + 'px'
+      hitbox.addEventListener('mouseenter', e => {
+        // debugger
+        if (mouse_controls) {
+          selected_y = y
+          selected_x = x
+          draw_selection(selected_y, selected_x, width)
+          return prevent_all(e || event)
+        }
+      }, false)
+      hovereventsdiv.appendChild(hitbox)
+    }
+
+    kill_children(hovereventsdiv)
+
+    for (let y = 0; y < height; ++y) {
+      for (let x = 0; x < width; ++x) {
+        create_hitbox(y, x)
+      }
+    }
   }
 
   /*
@@ -122,31 +229,101 @@
   SwitchTile.precache(5, 5)
 
   let in_game = false
+  let move_counter = 0
+
+  const movediv = document.getElementById('moves')
+  const mpsdiv = document.getElementById('mps')
+
+  const update_stats = (time, moves) => {
+    movediv.textContent = 'Solved in ' + moves + ' moves'
+    mpsdiv.textContent = time !== 0 ? ((moves / time).toFixed(2) + ' moves per second') : 'infinity?!?!?! moves per second'
+  }
+
+  const hide_stats = () => {
+    movediv.textContent = ''
+    mpsdiv.textContent = ''
+  }
 
   window.b = () => {
     // debugger
     timer_display.stop()
     timer_display.clear()
-
-    const size = +inputs.size.value
-    if (size >= 100 && size < 10000000000000000) {
-      set_size(size)
-    }
+    hide_stats()
 
     const width = Math.floor(+inputs.width.value || 3)
     const height = Math.floor(+inputs.height.value || width)
+
+    const zoom_inp = +inputs.zoom.value
+    if (zoom_inp >= 0.2 && zoom_inp < 100000000000000) {
+      zoom = zoom_inp
+      margin = OPT_DEFAULT_MARGIN_SIZE * zoom / width
+      set_size(zoom_inp * OPT_DEFAULT_SIZE)
+    } else {
+      margin = OPT_DEFAULT_MARGIN_SIZE * zoom / width
+    }
+
+    set_if_mouse_controls(inputs.mouse.checked)
+
     game.reset(height, width)
     selected_y = 0
     selected_x = 0
     in_game = false
+    move_counter = 0
     set_style(height, width)
+    create_hitboxes(height, width)
     draw_game(game)
     draw_selection(selected_y, selected_x, width)
   }
 
-  window.s = () => {
-    game.shuffle()
+  const get_shuffle_number = game => Math.max(200, 2 * (game.height + 1) * (game.width + 1) + 1);
+
+  const animated_shuffle_handler = () => {
+    ++currently_animated_shuffling
+
+    let shuffles = get_shuffle_number(game)
+    const shuffle = game.get_shuffler()
+    if (currently_animated_shuffling === 1) {
+      selectiondiv_hidden = selectiondiv.hidden
+      selectiondiv.hidden = true
+    }
+    const id = setInterval(() => {
+      if (currently_animated_shuffling === null) {
+        // Disabled in the middle
+        clearInterval(id)
+        while (shuffles-- > 0) {
+          shuffle()
+        }
+        draw_game(game)
+        return
+      }
+      if (shuffles-- > 0) {
+        shuffle()
+        draw_game(game)
+      } else {
+        clearInterval(id)
+        --currently_animated_shuffling
+        if (currently_animated_shuffling === 0) {
+          selectiondiv.hidden = selectiondiv_hidden
+          timer_display.stop()
+          timer_display.clear()
+          in_game = false
+          moves = 0
+        }
+      }
+    }, 10)
+  }
+
+  const shuffle_handler = () => {
+    game.shuffle(get_shuffle_number(game))
     draw_game(game)
+  }
+
+  window.s = () => {
+    timer_display.stop()
+    timer_display.clear()
+    in_game = false
+    moves = 0
+    ; (OPT_ANIMATED_SHUFFLE_HANDLER ? animated_shuffle_handler : shuffle_handler)()
   }
 
   window.b()
@@ -159,9 +336,8 @@
 
   const positive_mod = (a, b) => ((a % b) + b) % b
 
-  const keyhandler = e_ => {
+  const keyboard_keyhandler = e => {
     // debugger
-    const e = e_ || event
     const is_shift = e.getModifierState('Shift')
     let direction
     switch (e.key) {
@@ -203,20 +379,53 @@
     if (is_shift) {
       if (!in_game) {
         in_game = true
-        timer_display.start()
+        move_counter = 0
+        timer_display.start(OPT_TIMER_REFRESH_INTERVAL)
       }
       // debugger
       game.move([selected_x, selected_y], direction)
+      ++move_counter
       // debugger
       if (game.check()) {
         timer_display.stop()
         in_game = false
+        update_stats(timer_display.get() / 1000, move_counter)
       }
       draw_game(game)
       if (!OPT_MOVE_SELECTION) return prevent_all(e)
     }
     draw_selection(selected_y, selected_x, game.width)
     return prevent_all(e)
+  }
+
+  const mouse_key_handler = e => {
+    const direction = {
+      '@@ArrowUp': D,
+      '@@ArrowLeft': R,
+      '@@ArrowDown': U,
+      '@@ArrowRight': L
+    }['@@' + e.key]
+    if (direction === undefined) return
+    if (!in_game) {
+      in_game = true
+      move_counter = 0
+      timer_display.start(OPT_TIMER_REFRESH_INTERVAL)
+    }
+    game.move([selected_x, selected_y], direction)
+    ++move_counter
+    if (game.check()) {
+      timer_display.stop()
+      in_game = false
+      update_stats(timer_display.get() / 1000, move_counter)
+    }
+    draw_game(game)
+    draw_selection(selected_y, selected_x, game.width)
+    return prevent_all(e)
+  }
+
+  const keyhandler = e => {
+    if (currently_animated_shuffling) return
+    return (mouse_controls ? mouse_key_handler : keyboard_keyhandler)(e || event)
   }
 
   // document.body.addEventListener('keypress', )
@@ -293,8 +502,10 @@
     const timer_second = document.getElementById('timer-second')
     const timer_ms = document.getElementById('timer-ms')
 
+    let last_time = 0
+
     const update_time_display = () => {
-      const elapsed = timer()
+      const elapsed = last_time = timer()
       const minutes = Math.floor(elapsed / 60000)
       const s = Math.floor(elapsed / 1000) % 60
       const ms = ('000' + Math.floor(elapsed % 1000)).slice(-3)
@@ -315,7 +526,7 @@
     let interval_id = null
 
     return {
-      start: (delay = OPT_TIMER_REFRESH_INTERVAL) => {
+      start: (delay) => {
         timer.reset()
         if (interval_id === null) {
           interval_id = setInterval(update_time_display, delay)
@@ -334,7 +545,8 @@
         timer_second.textContent = '0'
         timer_colon.hidden = true
         timer_minute.textContent = ''
-      }
+      },
+      get: () => last_time
     }
   }
 })()
