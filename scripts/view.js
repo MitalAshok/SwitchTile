@@ -364,7 +364,6 @@
   }
 
   const on_after_move = () => {
-    ++move_counter
     if (game.check()) {
       timer_display.stop()
       in_game = false
@@ -417,6 +416,7 @@
       on_before_move()
       // debugger
       game.move([selected_x, selected_y], direction)
+      ++move_counter
       on_after_move()
       if (!OPT_MOVE_SELECTION) return prevent_all(e)
     }
@@ -434,6 +434,7 @@
     if (direction === undefined) return
     on_before_move()
     game.move([selected_x, selected_y], direction)
+    ++move_counter
     on_after_move()
     draw_game(game)
     // draw_selection(selected_y, selected_x, game.width)
@@ -462,12 +463,16 @@
       if (drag_start_y === drag_y) {
         if (drag_start_x !== drag_x) {
           on_before_move()
-          game.move_left(drag_start_y, drag_x - drag_start_x)
+          const dx = drag_x - drag_start_x
+          game.move_left(drag_start_y, dx)
+          move_counter += Math.min(positive_mod(dx, game.width), positive_mod(-dx, game.width))
           on_after_move()
         }
       } else if (drag_start_x === drag_x) {
         on_before_move()
-        game.move_up(drag_start_x, drag_y - drag_start_y)
+        const dy = drag_y - drag_start_y
+        game.move_up(drag_start_x, dy)
+        move_counter += Math.min(positive_mod(dy, game.height), positive_mod(-dy, game.height))
         on_after_move()
       }
       return prevent_all(e || event)
