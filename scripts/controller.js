@@ -186,7 +186,8 @@
       return true
     }
     check() {
-      return (new SwitchTile(this.height, this.width)).equals(this)
+      SwitchTile.precache(this.height, this.width)
+      return reset_cache[this.height][this.width].equals(this)
     }
     // method = null is pure random
     // method = Number is do "method" number of moves
