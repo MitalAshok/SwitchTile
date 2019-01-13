@@ -172,6 +172,14 @@
     selectionlines.bottom.style = 'top:' + (t_offset + tile_width + margin) + 'px'
   }
 
+  let drag_start_y = 0
+  let drag_start_x = 0
+
+  let drag_y = 0
+  let drag_x = 0
+
+  let currently_dragging = false
+
   const create_hitboxes = (height, width) => {
     const tile_width = get_tile_width(width)
 
@@ -180,6 +188,8 @@
       hitbox.style = 'left:' + (0.5 * margin + (margin + tile_width) * x) + 'px;top:' + (0.5 * margin + (margin + tile_width) * y) + 'px'
       hitbox.addEventListener('mouseenter', e => {
         // debugger
+        drag_y = y
+        drag_x = x
         if (mouse_controls) {
           selected_y = y
           selected_x = x
@@ -267,6 +277,11 @@
     game.reset(height, width)
     selected_y = 0
     selected_x = 0
+    drag_start_y = 0
+    drag_start_x = 0
+    drag_y = 0
+    drag_x = 0
+    currently_dragging = false
     in_game = false
     move_counter = 0
     set_style(height, width)
@@ -340,6 +355,24 @@
 
   const positive_mod = (a, b) => ((a % b) + b) % b
 
+  const on_before_move = () => {
+    if (!in_game) {
+      in_game = true
+      move_counter = 0
+      timer_display.start(OPT_TIMER_REFRESH_INTERVAL)
+    }
+  }
+
+  const on_after_move = () => {
+    ++move_counter
+    if (game.check()) {
+      timer_display.stop()
+      in_game = false
+      update_stats(timer_display.get() / 1000, move_counter)
+    }
+    draw_game(game)
+  }
+
   const keyboard_keyhandler = e => {
     // debugger
     const is_shift = e.getModifierState('Shift')
@@ -381,21 +414,10 @@
         return
     }
     if (is_shift) {
-      if (!in_game) {
-        in_game = true
-        move_counter = 0
-        timer_display.start(OPT_TIMER_REFRESH_INTERVAL)
-      }
+      on_before_move()
       // debugger
       game.move([selected_x, selected_y], direction)
-      ++move_counter
-      // debugger
-      if (game.check()) {
-        timer_display.stop()
-        in_game = false
-        update_stats(timer_display.get() / 1000, move_counter)
-      }
-      draw_game(game)
+      on_after_move()
       if (!OPT_MOVE_SELECTION) return prevent_all(e)
     }
     draw_selection(selected_y, selected_x, game.width)
@@ -410,20 +432,11 @@
       '@@ArrowRight': L
     }['@@' + e.key]
     if (direction === undefined) return
-    if (!in_game) {
-      in_game = true
-      move_counter = 0
-      timer_display.start(OPT_TIMER_REFRESH_INTERVAL)
-    }
+    on_before_move()
     game.move([selected_x, selected_y], direction)
-    ++move_counter
-    if (game.check()) {
-      timer_display.stop()
-      in_game = false
-      update_stats(timer_display.get() / 1000, move_counter)
-    }
+    on_after_move()
     draw_game(game)
-    draw_selection(selected_y, selected_x, game.width)
+    // draw_selection(selected_y, selected_x, game.width)
     return prevent_all(e)
   }
 
@@ -434,6 +447,32 @@
 
   // document.body.addEventListener('keypress', )
   document.addEventListener('keydown', keyhandler, false)
+  hovereventsdiv.addEventListener('mousedown', e => {
+    // debugger
+    if (!currently_dragging) {
+      drag_start_y = drag_y
+      drag_start_x = drag_x
+      currently_dragging = true
+      return prevent_all(e || event)
+    }
+  }, false)
+  hovereventsdiv.addEventListener('mouseup', e => {
+    if (currently_dragging) {
+      currently_dragging = false
+      if (drag_start_y === drag_y) {
+        if (drag_start_x !== drag_x) {
+          on_before_move()
+          game.move_left(drag_start_y, drag_x - drag_start_x)
+          on_after_move()
+        }
+      } else if (drag_start_x === drag_x) {
+        on_before_move()
+        game.move_up(drag_start_x, drag_y - drag_start_y)
+        on_after_move()
+      }
+      return prevent_all(e || event)
+    }
+  }, false)
 
   function make_images() {
     const svg_ns = 'http://www.w3.org/2000/svg'
