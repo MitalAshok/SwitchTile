@@ -110,11 +110,6 @@
     )
   }
 
-  const set_if_mouse_controls = to => {
-    mouse_controls = !!to
-    if (!OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS) selectiondiv.hidden = !!to
-  }
-
   const get_tile_width = width => (size - (width + 1) * margin) / width
 
   const set_style = (height, width) => {
@@ -170,6 +165,12 @@
     selectionlines.right.style = 'left:' + (l_offset + tile_width + margin) + 'px'
     selectionlines.top.style = 'top:' + t_offset + 'px'
     selectionlines.bottom.style = 'top:' + (t_offset + tile_width + margin) + 'px'
+  }
+
+  const set_if_mouse_controls = to => {
+    mouse_controls = !!to
+    draw_selection(selected_y, selected_x, game.width)
+    if (!OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS) selectiondiv.hidden = !!to
   }
 
   let drag_start_y = 0
