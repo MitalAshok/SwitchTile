@@ -35,14 +35,20 @@
   const randint_factory = (rng = default_rng) => (lower, upper) => Math.floor(rng() * (upper - lower + 1)) + lower
   const randchoice_factory = (rng = default_rng) => arr => arr[randint_factory(rng)(0, arr.length - 1)]
 
+  // Returns number of swaps done
   const shuffle_array = (arr, rng = default_rng) => {
+    let n_swaps = 0
     const randint = randint_factory(rng)
     for (let i = arr.length; i-- > 0;) {
       const rand_index = randint(0, i)
-      const temp = arr[i]
-      arr[i] = arr[rand_index]
-      arr[rand_index] = temp
+      if (rand_index !== i) {
+        const temp = arr[i]
+        arr[i] = arr[rand_index]
+        arr[rand_index] = temp
+        ; ++n_swaps
+      }
     }
+    return n_swaps
   }
 
   const rand2dindex_factory = (height, width, rng = default_rng) => {
@@ -55,19 +61,24 @@
 
   const shuffle_2d_array = (arr, rng = default_rng) => {
     const height = arr.length
-    if (height === 0) return
+    if (height === 0) return 0
     const width = arr[0].length
     const rand2dindex = rand2dindex_factory(height, width, rng)
+    let n_swaps = 0
     for (let i = height * width; i-- > 0;) {
       const y = Math.floor(i / height)
       const x = i % height
       const rand_index = rand2dindex(0, i)
       const rand_y = rand_index[0]
       const rand_x = rand_index[1]
-      const temp = arr[y][x]
-      arr[y][x] = arr[rand_y][rand_x]
-      arr[rand_y][rand_x] = temp
+      if (rand_y !== y || rand_x !== x) {
+        const temp = arr[y][x]
+        arr[y][x] = arr[rand_y][rand_x]
+        arr[rand_y][rand_x] = temp
+        ; ++n_swaps
+      }
     }
+    return n_swaps
   }
 
   const positive_mod = (a, b) => ((a % b) + b) % b
@@ -191,15 +202,43 @@
     }
     // method = null is pure random
     // method = Number is do "method" number of moves
-    shuffle(method = 500, rng = default_rng) {
+    shuffle(method = null, rng = default_rng) {
       if (method === null) {
-        shuffle_2d_array(this.tiles, rng)
+        const height = this.height
+        const width = this.width
+        const tiles = this.tiles
+        if (height === 0 || width === 0) return this
+        if (height === 1 || width === 1) {
+          if (height === width) return this
+          const direction = height === 1 ? LEFT_MASK : UP_MASK
+          const amount = randint_factory(rng)(0, Math.max(height, width) - 1)
+          this.move(0, direction, amount)
+          return this
+        }
+        const parity = shuffle_2d_array(this.tiles, rng) % 2
+        if (height === 3 && width === 3 && parity === 1) {
+          // Parity correction; Swap 1 more to have an even parity
+          const rand2dindex = rand2dindex_factory(height, width, rng)
+          const first = rand2dindex(0, height * width - 1)
+          const second = rand2dindex(0, height * width - 2)
+          if (first[0] === second[0] && first[1] === second[1]) {
+            ; ++second[1]
+            if (second[1] === width) {
+              second[1] = 0
+              ; ++second[0]
+            }
+          }
+          const temp = tiles[first[0]][first[1]]
+          tiles[first[0]][first[1]] = tiles[second[0]][second[1]]
+          tiles[second[0]][second[1]] = temp
+        }
         return this
       } else {
         const shuffle = this.get_shuffler(rng)
         while (method-- > 0) {
           shuffle()
         }
+        return this
       }
     }
     get_shuffler(rng = default_rng) {
