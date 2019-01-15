@@ -55,19 +55,17 @@
     const area = height * width
     return (lower = 0, upper = area - 1) => {
       const i = Math.floor(rng() * (upper - lower + 1)) + lower
-      return [Math.floor(i / height), i % height]
+      return [Math.floor(i / width), i % width]
     }
   }
 
-  const shuffle_2d_array = (arr, rng = default_rng) => {
-    const height = arr.length
+  const shuffle_2d_array = (arr, height, width, rng = default_rng) => {
     if (height === 0) return 0
-    const width = arr[0].length
     const rand2dindex = rand2dindex_factory(height, width, rng)
     let n_swaps = 0
     for (let i = height * width; i-- > 0;) {
-      const y = Math.floor(i / height)
-      const x = i % height
+      const y = Math.floor(i / width)
+      const x = i % width
       const rand_index = rand2dindex(0, i)
       const rand_y = rand_index[0]
       const rand_x = rand_index[1]
@@ -212,10 +210,10 @@
           if (height === width) return this
           const direction = height === 1 ? LEFT_MASK : UP_MASK
           const amount = randint_factory(rng)(0, Math.max(height, width) - 1)
-          this.move(0, direction, amount)
+          this.move([0, 0], direction, amount)
           return this
         }
-        const parity = shuffle_2d_array(this.tiles, rng) % 2
+        const parity = shuffle_2d_array(tiles, height, width, rng) % 2
         if (height === 3 && width === 3 && parity === 1) {
           // Parity correction; Swap 1 more to have an even parity
           const rand2dindex = rand2dindex_factory(height, width, rng)
