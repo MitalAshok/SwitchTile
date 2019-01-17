@@ -29,6 +29,13 @@
   let OPT_DEFAULT_SIZE = +search_or_default('size', 500) || 500
   let OPT_ANIMATED_SHUFFLE_HANDLER // = search_set('anime')
   let OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS // = search_set('mouseselect')
+  const OPT_COLOURS = {
+    up: search_or_default('up', '#222222'),
+    down: search_or_default('down', '#FFFF66'),
+    left: search_or_default('left', '#4488CC'),
+    right: search_or_default('right', '#55FF88')
+  }
+
 
   const options = {
     move: document.getElementById('opt-move'),
@@ -518,10 +525,10 @@
     const triangle = (a_x, a_y, b_x, b_y, c_x, c_y, fill = null) =>
         path(make_d(true, [a_x, a_y], [b_x, b_y], [c_x, c_y]), fill)
 
-    const UC = '#222222'
-    const DC = '#FFFF66'
-    const LC = '#4488CC'
-    const RC = '#55FF88'
+    const UC = OPT_COLOURS.up  // '#222222'
+    const DC = OPT_COLOURS.down  // '#FFFF66'
+    const LC = OPT_COLOURS.left  // '#4488CC'
+    const RC = OPT_COLOURS.right  // '#55FF88'
 
     return {
       [0             ]: svg(rect(0, 0, 2, 2, 'purple')),
