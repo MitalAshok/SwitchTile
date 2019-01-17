@@ -351,6 +351,12 @@
     UP_DOWN_LEFT_TILE, UP_DOWN_RIGHT_TILE, UP_LEFT_RIGHT_TILE, DOWN_LEFT_RIGHT_TILE,
 
     default_rng,
-    timer_factory
+    timer_factory,
+    randint_factory,
+    randchoice_factory,
+    shuffle_array,
+    rand2dindex_factory,
+    shuffle_2d_array,
+    positive_mod
   })
 })();

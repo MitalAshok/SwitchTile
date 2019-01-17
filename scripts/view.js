@@ -1,6 +1,12 @@
 /* jshint bitwise: false, newcap: false, asi: true, eqnull: true, esversion: 6, expr: true */
 
 (() => {
+  const SwitchTile = window.SwitchTile
+
+  if (SwitchTile === undefined) {
+    return
+  }
+
   const get_search_key = (location.search === '' || location.search === '?') ? (key => undefined) : (() => {
     const search = location.search.slice(1).split('&')
     const mapped = search.reduce(((acc, cur) => {
@@ -29,11 +35,75 @@
   let OPT_DEFAULT_SIZE = +search_or_default('size', 500) || 500
   let OPT_ANIMATED_SHUFFLE_HANDLER // = search_set('anime')
   let OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS // = search_set('mouseselect')
+
+  const DEFAULT_COLOUR_SCHEME = {
+    up: '#222222',
+    down: '#FFFF66',
+    left: '#4488CC',
+    right: '#55FF88'
+  }
+
+  const GREYSCALE_COLOUR_SCHEME = {
+    up: '#222222',
+    down: '#EDEDED',
+    left: '#7B7B7B',
+    right: '#BEBEBE'
+  }
+
+  const INVERTED_COLOUR_SCHEME = {
+    up: '#DDDDDD',
+    down: '#000099',
+    left: '#BB7733',
+    right: '#AA0077'
+  }
+
+  const rubiks_left_right = SwitchTile.randchoice_factory()([
+    ['green', 'orange'],
+    ['orange', 'blue'],
+    ['blue', 'red'],
+    ['red', 'green']
+  ])
+
+  // SwitchTile.shuffle_array(rubiks_left_right)
+
+  const RUBIKS_COLOUR_SCHEME = {
+    up: 'yellow',
+    down: 'white',
+    left: rubiks_left_right[0],
+    right: rubiks_left_right[1]
+  }
+
+  const colour_scheme = {
+    '@@default': DEFAULT_COLOUR_SCHEME,
+    '@@': DEFAULT_COLOUR_SCHEME,
+    '@@grey': GREYSCALE_COLOUR_SCHEME,
+    '@@gray': GREYSCALE_COLOUR_SCHEME,
+    '@@greyscale': GREYSCALE_COLOUR_SCHEME,
+    '@@grayscale': GREYSCALE_COLOUR_SCHEME,
+    '@@invert': INVERTED_COLOUR_SCHEME,
+    '@@inverted': INVERTED_COLOUR_SCHEME,
+    '@@rubik': RUBIKS_COLOUR_SCHEME,
+    '@@rubiks': RUBIKS_COLOUR_SCHEME,
+    '@@r': RUBIKS_COLOUR_SCHEME
+  }['@@' + search_or_default('colourscheme', 'default')] || DEFAULT_COLOUR_SCHEME
+
+  const colour_scheme_defaulter = {
+    '@@up': colour_scheme.up,
+    '@@down': colour_scheme.down,
+    '@@left': colour_scheme.left,
+    '@@right': colour_scheme.right
+  }
+
+  const colour_default = side => {
+    const colour = search_or_default(side, colour_scheme[side])
+    return colour_scheme_defaulter['@@' + colour] || colour
+  }
+
   const OPT_COLOURS = {
-    up: search_or_default('up', '#222222'),
-    down: search_or_default('down', '#FFFF66'),
-    left: search_or_default('left', '#4488CC'),
-    right: search_or_default('right', '#55FF88')
+    up: colour_default('up'),
+    down: colour_default('down'),
+    left: colour_default('left'),
+    right: colour_default('right')
   }
 
 
@@ -70,11 +140,6 @@
       }
     }
   }, false)
-
-  const SwitchTile = window.SwitchTile
-  if (SwitchTile === undefined) {
-    return
-  }
 
   const U = SwitchTile.UP_MASK
   const D = SwitchTile.DOWN_MASK
