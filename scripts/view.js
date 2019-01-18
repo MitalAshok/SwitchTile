@@ -311,6 +311,8 @@
   SwitchTile.precache(4, 4)
   SwitchTile.precache(5, 5)
 
+  game.deserialise(get_search_key('p'))
+
   let in_game = false
   let move_counter = 0
 
@@ -327,7 +329,7 @@
     mpsdiv.textContent = ''
   }
 
-  window.b = () => {
+  const reset = reset_game => {
     // debugger
     timer_display.stop()
     timer_display.clear()
@@ -347,7 +349,9 @@
 
     set_if_mouse_controls(inputs.mouse.checked)
 
-    game.reset(height, width)
+    if (reset_game) {
+      game.reset(height, width)
+    }
     selected_y = 0
     selected_x = 0
     drag_start_y = 0
@@ -361,6 +365,10 @@
     create_hitboxes(height, width)
     draw_game(game)
     draw_selection(selected_y, selected_x, width)
+  }
+
+  window.b = () => {
+    reset(true)
   }
 
   inputs.mouse.addEventListener('change', () => {
@@ -418,7 +426,12 @@
     ; (OPT_ANIMATED_SHUFFLE_HANDLER ? animated_shuffle_handler : shuffle_handler)()
   }
 
-  window.b()
+  if (game.deserialise(get_search_key('p'))) {
+    inputs.height.value = '' + game.height
+    inputs.width.value = '' + game.width
+  }
+
+  reset(false)
 
   const prevent_all = e => {
     e.preventDefault()
@@ -551,6 +564,17 @@
       return prevent_all(e || event)
     }
   }, false)
+
+  window.l = () => {
+    const s = game.serialise()
+    const search = location.search.replace(/(?:^\?|&)p(?:=.*)(?:&|$)/g, '')
+    if (location.search === '' || location.search === '?') {
+      location.search = '?p=' + s
+      return
+    }
+    location.search = search + '&p=' + s
+    return
+  }
 
   function make_images() {
     const svg_ns = 'http://www.w3.org/2000/svg'

@@ -118,7 +118,7 @@
       if (reset_cache[height] === undefined) {
         reset_cache[height] = []
       } else if (reset_cache[height][width] !== undefined) {
-        return
+        return SwitchTile
       }
       const tiles = Array
         .apply(null, {length: height})
@@ -148,6 +148,7 @@
       cached.height = height
       cached.width = width
       reset_cache[height][width] = cached
+      return SwitchTile
     }
     copy() {
       const copy = Object.create(SwitchTile.prototype)
@@ -287,6 +288,7 @@
       for (let i = 0; i < height; ++i) {
         r[i][col] = copy[(i + amount) % height]
       }
+      return this
     }
 
     move_down(col, amount = 1) {
@@ -301,10 +303,88 @@
       for (let i = 0; i < width; ++i) {
         r[i] = copy[(i + amount) % width]
       }
+      return this
     }
 
     move_right(row, amount = 1) {
       return this.move_left(row, -amount)
+    }
+    serialise() {
+      const width = this.width
+      const height = this.height
+      const tiles = this.tiles
+      const serialised = Array(height + 1)
+      serialised[0] = width + ';';
+      for (let y = 0; y < height; ++y) {
+        const row = tiles[y]
+        const serialised_row = []
+        for (let x = 0; x < width; ++x) {
+          const byte = (row[x] << 4) | row[++x]
+          serialised_row.push(String.fromCharCode(byte))
+        }
+        serialised.push(serialised_row.join(''))
+      }
+      return btoa(serialised.join('')).replace(/\//g, '_').replace(/\+/g, '-')
+    }
+    static deserialise(serialised) {
+      if (typeof serialised !== 'string') {
+        return null
+      }
+      let raw
+      try {
+        raw = atob(serialised.replace(/_/g, '/').replace(/-/g, '+'))
+      } catch (_) {
+        return null
+      }
+      const seperator_index = raw.indexOf(';')
+      if (seperator_index === -1) {
+        return null
+      }
+      const width_str = raw.slice(0, seperator_index)
+      const bytes = raw.slice(seperator_index + 1)
+      if (!/[1-9][0-9]*/.test(width_str)) {
+        return null
+      }
+      const width = +width_str
+      if (!Number.isSafeInteger(width)) {
+        return null
+      }
+      const width_bytes_length = (width + width % 2) / 2
+      if (bytes.length % width_bytes_length !== 0) {
+        return null
+      }
+      const height = bytes.length / width_bytes_length
+      if (!Number.isSafeInteger(height) || !Number.isSafeInteger(height * width)) {
+        return null
+      }
+      const tiles = Array(height)
+      for (let y = 0; y < height; ++y) {
+        const row = tiles[y] = Array(width)
+        let x;
+        for (x = 0; x < width - 2; ++x) {
+          const byte = bytes.charCodeAt(y * width_bytes_length + x / 2)
+          row[x] = byte >> 4
+          row[++x] = byte & 0xF
+        }
+        const byte = bytes.charCodeAt(y * width_bytes_length + x / 2)
+        row[x] = byte >> 4
+        if (++x < width) {
+          row[x] = byte & 0xF
+        }
+      }
+      const o = Object.create(SwitchTile.prototype)
+      o.height = height
+      o.width = width
+      o.tiles = tiles
+      return o
+    }
+    deserialise(serialised) {
+      const deserialised = SwitchTile.deserialise(serialised)
+      if (deserialised === null) {
+        return null
+      }
+      this.set_to(deserialised)
+      return this
     }
   }
 
