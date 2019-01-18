@@ -113,7 +113,7 @@
         !Number.isSafeInteger(width) ||
         !Number.isSafeInteger(height * width)
       ) {
-        throw Error('height or width are invalid (height: ' + height + ', width: ' + width + ')')
+        height = width = 3
       }
       if (reset_cache[height] === undefined) {
         reset_cache[height] = []
