@@ -100,15 +100,26 @@
     reset(height, width) {
       height = Number(height) || this.height
       width = Number(width) || this.width
-      if (reset_cache[height] === undefined || reset_cache[height][width] === undefined) {
-        SwitchTile.precache(height, width)
-      }
+      SwitchTile.precache(height, width)
       this.set_to(reset_cache[height][width])
     }
     static precache(height, width = height) {
-      if (reset_cache[height] !== undefined && reset_cache[height][width] !== undefined) return
       height = +height
       width = +width
+      if (
+        typeof height !== 'number' || height < 0 ||
+        !Number.isSafeInteger(height) ||
+        typeof width !== 'number' || width < 0 ||
+        !Number.isSafeInteger(width) ||
+        !Number.isSafeInteger(height * width)
+      ) {
+        throw Error('height or width are invalid (height: ' + height + ', width: ' + width + ')')
+      }
+      if (reset_cache[height] === undefined) {
+        reset_cache[height] = []
+      } else if (reset_cache[height][width] !== undefined) {
+        return
+      }
       const tiles = Array
         .apply(null, {length: height})
         .map(() => Array.apply(null, {length: width}).map(() => 0))
@@ -136,9 +147,6 @@
       cached.tiles = tiles
       cached.height = height
       cached.width = width
-      if (reset_cache[height] === undefined) {
-        reset_cache[height] = []
-      }
       reset_cache[height][width] = cached
     }
     copy() {
