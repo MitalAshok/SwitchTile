@@ -324,18 +324,26 @@
         }
         serialised.push(serialised_row.join(''))
       }
-      return btoa(serialised.join('')).replace(/\//g, '_').replace(/\+/g, '-')
+      return btoa(serialised.join('')).replace(/\//g, '_').replace(/\+/g, '-').replace(/={1,2}$/, '')
     }
     static deserialise(serialised) {
       if (typeof serialised !== 'string') {
         return null
       }
       let raw
-      try {
-        raw = atob(serialised.replace(/_/g, '/').replace(/-/g, '+'))
-      } catch (_) {
+      // Invalid characters exist
+      if (/[^a-zA-Z0-9_\-]/.test(serialised)) {
         return null
       }
+      // Cannot have base 64 string with this length
+      if (serialised.length % 4 == 1) {
+        return null
+      }
+      // Re add padding
+      if (serialised.length % 4) {
+        serialised += '==='.slice(0, 4 - (serialised.length % 4));
+      }
+      raw = atob(serialised.replace(/_/g, '/').replace(/-/g, '+'))
       const seperator_index = raw.indexOf(';')
       if (seperator_index === -1) {
         return null
