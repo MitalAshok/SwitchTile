@@ -573,7 +573,7 @@
     }
   }, false)
   hovereventsdiv.addEventListener('mouseup', e => {
-    if (currently_dragging) {
+    if (currently_dragging && shuffled) {
       currently_dragging = false
       if (drag_start_y === drag_y) {
         if (drag_start_x !== drag_x) {
