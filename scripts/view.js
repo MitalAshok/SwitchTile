@@ -121,7 +121,10 @@
 
   options.move.addEventListener('change', () => { OPT_MOVE_SELECTION = !!options.move.checked }, false)
   options.wrap.addEventListener('change', () => { OPT_WRAP_SELECTION = !!options.wrap.checked }, false)
-  options.mouse_select.addEventListener('change', () => { OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS = !!options.mouse_select.checked }, false)
+  options.mouse_select.addEventListener('change', () => {
+    OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS = !!options.mouse_select.checked
+    draw_selection(selected_y, selected_x, width)
+  }, false)
 
   let currently_animated_shuffling = OPT_ANIMATED_SHUFFLE_HANDLER ? 0 : null
   let selectiondiv_hidden = null
@@ -329,6 +332,8 @@
     mpsdiv.textContent = ''
   }
 
+  const SHUFFLE_RESET = (typeof Symbol === 'function' ? Symbol : Object)('SHUFFLE_RESET')
+
   const reset = reset_game => {
     // debugger
     timer_display.stop()
@@ -349,15 +354,25 @@
 
     set_if_mouse_controls(inputs.mouse.checked)
 
-    if (reset_game) {
+    if (reset_game === SHUFFLE_RESET) {
+      if (height !== game.height || width != game.width) {
+        game.reset(height, width)
+      }
+    } if (reset_game) {
       game.reset(height, width)
     }
-    selected_y = 0
-    selected_x = 0
-    drag_start_y = 0
-    drag_start_x = 0
-    drag_y = 0
-    drag_x = 0
+    if (reset_game != SHUFFLE_RESET || (
+      selected_y >= height || selected_x >= width ||
+      drag_start_y >= height || drag_start_y >= width ||
+      drag_y >= height || drag_x >= width
+    )) {
+      selected_y = 0
+      selected_x = 0
+      drag_start_y = 0
+      drag_start_x = 0
+      drag_y = 0
+      drag_x = 0
+    }
     currently_dragging = false
     in_game = false
     move_counter = 0
@@ -423,6 +438,7 @@
     timer_display.clear()
     in_game = false
     moves = 0
+    reset(SHUFFLE_RESET)
     ; (OPT_ANIMATED_SHUFFLE_HANDLER ? animated_shuffle_handler : shuffle_handler)()
   }
 
@@ -568,7 +584,7 @@
   window.l = () => {
     const s = game.serialise()
     const search = location.search.replace(/(?:^\?|&)p(?:=.*)(?:&|$)/g, '')
-    if (location.search === '' || location.search === '?') {
+    if (search === '' || search === '?') {
       location.search = '?p=' + s
       return
     }
