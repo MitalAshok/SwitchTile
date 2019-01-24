@@ -28,6 +28,7 @@
   const search_set = key => get_search_key(key) !== undefined
   const search_or_default = (key, default_ = null) => get_search_key(key) === undefined ? default_ : get_search_key(key)
 
+  let OPT_WIN_GRACE_TIME = search_set('grace') ? (+search_or_default('grace', 1.5) || 1.5) * 1000 : null
   let OPT_MOVE_SELECTION // = search_set('move')
   let OPT_WRAP_SELECTION // = OPT_MOVE_SELECTION ? true : search_not_set('nowrap')
   let OPT_TIMER_REFRESH_INTERVAL = +search_or_default('timer_referesh', 1) || 1
@@ -332,6 +333,8 @@
     mpsdiv.textContent = ''
   }
 
+  let shuffled = false
+
   const SHUFFLE_RESET = (typeof Symbol === 'function' ? Symbol : Object)('SHUFFLE_RESET')
 
   const reset = reset_game => {
@@ -357,9 +360,11 @@
     if (reset_game === SHUFFLE_RESET) {
       if (height !== game.height || width != game.width) {
         game.reset(height, width)
+        shuffled = false
       }
     } if (reset_game) {
       game.reset(height, width)
+      shuffled = false
     }
     if (reset_game != SHUFFLE_RESET || (
       selected_y >= height || selected_x >= width ||
@@ -440,9 +445,11 @@
     moves = 0
     reset(SHUFFLE_RESET)
     ; (OPT_ANIMATED_SHUFFLE_HANDLER ? animated_shuffle_handler : shuffle_handler)()
+    shuffled = true
   }
 
   if (game.deserialise(get_search_key('p'))) {
+    shuffled = true
     inputs.height.value = '' + game.height
     inputs.width.value = '' + game.width
   }
@@ -465,11 +472,15 @@
     }
   }
 
+  const win_timer = SwitchTile.timer_factory()
+
   const on_after_move = () => {
     if (game.check()) {
       timer_display.stop()
       in_game = false
       update_stats(timer_display.get() / 1000, move_counter)
+      win_timer.reset()
+      shuffled = false
     }
     draw_game(game)
   }
@@ -544,6 +555,8 @@
   }
 
   const keyhandler = e => {
+    if (OPT_WIN_GRACE_TIME !== null && win_timer() < OPT_WIN_GRACE_TIME) return
+    if (OPT_WIN_GRACE_TIME === null && !shuffled) return
     if (currently_animated_shuffling) return
     return (mouse_controls ? mouse_key_handler : keyboard_keyhandler)(e || event)
   }
