@@ -1,6 +1,6 @@
 /* jshint bitwise: false, newcap: false, asi: true, eqnull: true, esversion: 6, expr: true */
 
-(() => {
+; (() => {
   const SwitchTile = window.SwitchTile
 
   if (SwitchTile === undefined) {
@@ -206,27 +206,47 @@
     while ((last_child = node.lastChild)) node.removeChild(last_child)
   }
 
-  const draw_game = switchtile => {
+  const tile_cache = Array(SwitchTile.ALL_TILE + 1)
+
+  for (let i = 0; i < tile_cache.length; ++i) {
+    tile_cache[i] = []
+  }
+
+  const draw_game = (switchtile, first = false) => {
     // debugger
-    const fragment = document.createDocumentFragment()
+    const cache_used = {}
+    // const fragment = document.createDocumentFragment()
     const height = switchtile.height
     const width = switchtile.width
     const tile_width = get_tile_width(width)
+    if (first) {
+      kill_children(gamediv)
+    }
     for (let y = 0; y < height; ++y) {
       const row = switchtile.tiles[y]
       for (let x = 0; x < width; ++x) {
-        const tile = images[row[x]]()
-        tile.setAttribute('style',
+        const tile_value = row[x]
+        let tile = tile_cache[tile_value][(cache_used[tile_value]++ || (cache_used[tile_value] = 1, 0))]
+        if (first) {
+          if (!tile) {
+            tile = tile_cache[tile_value][cache_used[tile_value] - 1] = images[tile_value]()
+          }
+          gamediv.appendChild(tile)
+        }
+        const s = (
           'top:' + (margin * (y + 1) + tile_width * y) + 'px;left:' +
           (margin * (x + 1) + tile_width * x) + 'px'
         )
-        //tile.setAttribute('style', 'top: 5px;left:5px')
-        fragment.appendChild(tile)
+        if (tile.getAttribute('style') != s) {
+          tile.setAttribute('style', s)
+        }
+        // tile.setAttribute('style', 'top: 5px;left:5px')
+        // fragment.appendChild(tile)
       }
     }
     // gamediv.hidden = true
-    kill_children(gamediv)
-    gamediv.appendChild(fragment)
+    // kill_children(gamediv)
+    // gamediv.appendChild(fragment)
     // gamediv.hidden = false
   }
 
@@ -337,6 +357,12 @@
 
   const SHUFFLE_RESET = (typeof Symbol === 'function' ? Symbol : Object)('SHUFFLE_RESET')
 
+  const prevent_all = e => {
+    e.preventDefault()
+    e.stopPropagation()
+    return false
+  }
+
   const reset = reset_game => {
     // debugger
     timer_display.stop()
@@ -383,7 +409,7 @@
     move_counter = 0
     set_style(height, width)
     create_hitboxes(height, width)
-    draw_game(game)
+    draw_game(game, true)
     draw_selection(selected_y, selected_x, width)
   }
 
@@ -455,12 +481,6 @@
   }
 
   reset(false)
-
-  const prevent_all = e => {
-    e.preventDefault()
-    e.stopPropagation()
-    return false
-  }
 
   const positive_mod = (a, b) => ((a % b) + b) % b
 

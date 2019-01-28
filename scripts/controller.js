@@ -1,6 +1,6 @@
 /* jshint bitwise: false, newcap: false, asi: true, eqnull: true, esversion: 6, expr: true */
 
-(() => {
+; (() => {
   const UP_MASK = 1
   const DOWN_MASK = 2
   const LEFT_MASK = 4
