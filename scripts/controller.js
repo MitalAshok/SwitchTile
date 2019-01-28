@@ -228,7 +228,8 @@
           const rand2dindex = rand2dindex_factory(height, width, rng)
           const first = rand2dindex(0, height * width - 1)
           const second = rand2dindex(0, height * width - 2)
-          if (first[0] === second[0] && first[1] === second[1]) {
+          if (second[0] > first[0] || (second[0] == first[0] && second[1] >= second[1])) {
+            // Increment second by 1
             ; ++second[1]
             if (second[1] === width) {
               second[1] = 0
