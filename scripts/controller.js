@@ -95,7 +95,7 @@
       this.width = 0
       this.height = 0
       this.tiles = null
-      this.reset(height, width);
+      this.reset(height, width)
     }
     reset(height, width) {
       height = Number(height) || this.height
@@ -315,7 +315,7 @@
       const height = this.height
       const tiles = this.tiles
       const serialised = Array(height + 1)
-      serialised[0] = width + ';';
+      serialised[0] = width + ';'
       for (let y = 0; y < height; ++y) {
         const row = tiles[y]
         const serialised_row = []
@@ -342,7 +342,7 @@
       }
       // Re add padding
       if (serialised.length % 4) {
-        serialised += '==='.slice(0, 4 - (serialised.length % 4));
+        serialised += '==='.slice(0, 4 - (serialised.length % 4))
       }
       raw = atob(serialised.replace(/_/g, '/').replace(/-/g, '+'))
       const seperator_index = raw.indexOf(';')
@@ -369,7 +369,7 @@
       const tiles = Array(height)
       for (let y = 0; y < height; ++y) {
         const row = tiles[y] = Array(width)
-        let x;
+        let x
         for (x = 0; x < width - 2; ++x) {
           const byte = bytes.charCodeAt(y * width_bytes_length + x / 2)
           row[x] = byte >> 4

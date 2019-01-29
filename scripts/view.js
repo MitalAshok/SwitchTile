@@ -421,7 +421,7 @@
     set_if_mouse_controls(inputs.mouse.checked)
   }, false)
 
-  const get_shuffle_number = game => Math.max(200, 2 * (game.height + 1) * (game.width + 1) + 1) + Math.floor(Math.random() * 2);
+  const get_shuffle_number = game => Math.max(200, 2 * (game.height + 1) * (game.width + 1) + 1) + Math.floor(Math.random() * 2)
 
   const animated_shuffle_handler = () => {
     ++currently_animated_shuffling
@@ -746,4 +746,4 @@
       get: () => last_time
     }
   }
-})()
+})();
