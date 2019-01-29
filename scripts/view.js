@@ -363,10 +363,35 @@
     return false
   }
 
+  let paused = false
+  let pause_time = null
+
+  const pause = () => {
+    if (paused) return
+    if (!in_game) return
+    paused = true
+    timer_display.stop()
+    pause_time = timer_display.get()
+  }
+
+  const unpause = () => {
+    if (!paused) return
+    paused = false
+    timer_display.start(OPT_TIMER_REFRESH_INTERVAL)
+    timer_display.set(pause_time)
+    pause_time = null
+  }
+
+  window.p = () => {
+    (paused ? unpause : pause)()
+  }
+
   const reset = reset_game => {
     // debugger
     timer_display.stop()
     timer_display.clear()
+    paused = false
+    pause_time = null
     hide_stats()
 
     const width = Math.floor(+inputs.width.value || 3)
@@ -452,6 +477,8 @@
           selectiondiv.hidden = selectiondiv_hidden
           timer_display.stop()
           timer_display.clear()
+          paused = false
+          pause_time = null
           in_game = false
           moves = 0
         }
@@ -467,6 +494,8 @@
   window.s = () => {
     timer_display.stop()
     timer_display.clear()
+    paused = false
+    pause_time = null
     in_game = false
     moves = 0
     reset(SHUFFLE_RESET)
@@ -489,6 +518,11 @@
       in_game = true
       move_counter = 0
       timer_display.start(OPT_TIMER_REFRESH_INTERVAL)
+      paused = false
+      pause_time = null
+    }
+    if (paused) {
+      unpause()
     }
   }
 
@@ -500,6 +534,7 @@
   const on_after_move = () => {
     if (game.check()) {
       timer_display.stop()
+      unpause()
       in_game = false
       update_stats(timer_display.get() / 1000, move_counter)
       win_timer.reset()
@@ -577,10 +612,13 @@
     return prevent_all(e)
   }
 
+  const can_move = () => {
+    if (currently_animated_shuffling) return false
+    return OPT_WIN_GRACE_TIME === null ? (shuffled) : (win_timer() >= OPT_WIN_GRACE_TIME)
+  }
+
   const keyhandler = e => {
-    if (OPT_WIN_GRACE_TIME !== null && win_timer() < OPT_WIN_GRACE_TIME) return
-    if (OPT_WIN_GRACE_TIME === null && !shuffled) return
-    if (currently_animated_shuffling) return
+    if (!can_move()) return
     return (mouse_controls ? mouse_key_handler : keyboard_keyhandler)(e || event)
   }
 
@@ -596,7 +634,8 @@
     }
   }, false)
   hovereventsdiv.addEventListener('mouseup', e => {
-    if (currently_dragging && shuffled) {
+    if (!can_move()) return
+    if (currently_dragging) {
       currently_dragging = false
       if (drag_start_y === drag_y) {
         if (drag_start_x !== drag_x) {
@@ -743,7 +782,11 @@
         timer_colon.hidden = true
         timer_minute.textContent = ''
       },
-      get: () => last_time
+      get: () => last_time,
+      set: (to = 0) => {
+        timer.set(to)
+        update_time_display()
+      }
     }
   }
 })();
