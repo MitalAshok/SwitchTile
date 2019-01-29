@@ -397,11 +397,16 @@
     }
   }
 
-  const performance_now = window.performance ? (
-    performance.now ? performance.now.bind(performance) :
-    performance.webkitNow ? performance.webkitNow.bind(performance) :
-    null
-  ) : null
+  const performance_now = window.performance ?
+      (performance_now => performance_now && performance_now.bind(performance))(
+        performance.now ||
+        performance.webkitNow ||
+        performance.msNow ||
+        performance.oNow ||
+        performance.mozNow ||
+        null
+      ) :
+      null
 
   // timer_factroy returns a function
   // Successive calls to the function will
@@ -425,12 +430,12 @@
       }
       timer.reset = () => {
         offset = -Date.now()
-        seen = 0
+        seen = -Infinity
         timer()
       }
       timer.set = (to = 0) => {
         offset = to - Date.now()
-        seen = 0
+        seen = -Infinity
         timer()
       }
       timer.reset()
