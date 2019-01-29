@@ -493,6 +493,9 @@
   }
 
   const win_timer = SwitchTile.timer_factory()
+  if (OPT_WIN_GRACE_TIME !== null) {
+    win_timer.set(OPT_WIN_GRACE_TIME)
+  }
 
   const on_after_move = () => {
     if (game.check()) {

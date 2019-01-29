@@ -424,7 +424,12 @@
         return t + offset
       }
       timer.reset = () => {
-        offset = 0
+        offset = -Date.now()
+        seen = 0
+        timer()
+      }
+      timer.set = (to = 0) => {
+        offset = to - Date.now()
         seen = 0
         timer()
       }
@@ -435,6 +440,7 @@
     let last
     const timer = () => performance_now() - last
     timer.reset = () => { last = performance_now() }
+    timer.set = (to = 0) => { last = performance_now() - to }
     timer.reset()
     return timer
   }
