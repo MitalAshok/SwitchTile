@@ -209,6 +209,27 @@
     }
     // method = null is pure random
     // method = Number is do "method" number of moves
+    swap(times = 1, rng = default_rng) {
+      const height = this.height
+      const width = this.width
+      const tiles = this.tiles
+      const rand2dindex = rand2dindex_factory(height, width, rng)
+      while (times-- > 0) {
+        const first = rand2dindex(0, height * width - 1)
+        const second = rand2dindex(0, height * width - 2)
+        if (second[0] > first[0] || (second[0] == first[0] && second[1] >= second[1])) {
+          // Increment second by 1
+          ; ++second[1]
+          if (second[1] === width) {
+            second[1] = 0
+            ; ++second[0]
+          }
+        }
+        const temp = tiles[first[0]][first[1]]
+        tiles[first[0]][first[1]] = tiles[second[0]][second[1]]
+        tiles[second[0]][second[1]] = temp
+      }
+    }
     shuffle(method = null, rng = default_rng) {
       if (method === null) {
         const height = this.height
@@ -224,6 +245,7 @@
         }
         const parity = shuffle_2d_array(tiles, height, width, rng) % 2
         if (height === 3 && width === 3 && parity === 1) {
+          /*
           // Parity correction; Swap 1 more to have an even parity
           const rand2dindex = rand2dindex_factory(height, width, rng)
           const first = rand2dindex(0, height * width - 1)
@@ -239,6 +261,8 @@
           const temp = tiles[first[0]][first[1]]
           tiles[first[0]][first[1]] = tiles[second[0]][second[1]]
           tiles[second[0]][second[1]] = temp
+          */
+          this.swap(1, rng)
         }
         return this
       } else {

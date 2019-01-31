@@ -36,6 +36,7 @@
   let OPT_DEFAULT_SIZE = +search_or_default('size', 500) || 500
   let OPT_ANIMATED_SHUFFLE_HANDLER // = search_set('anime')
   let OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS // = search_set('mouseselect')
+  let OPT_IMPOSSIBLE = search_set('impossible')
 
   const DEFAULT_COLOUR_SCHEME = {
     up: '#222222',
@@ -487,6 +488,24 @@
   }
 
   const shuffle_handler = () => {
+    if (OPT_IMPOSSIBLE) {
+      if (game.width === 3 && game.height === 3) {
+        game.reset()
+        game.swap()
+      } else if (game.width === 1 && game.height > 1) {
+        game.reset()
+        const new_index = SwitchTile.randint_factory()(1, game.height - 1)
+        const temp = game.tiles[0][0]
+        game.tiles[0][0] = game.tiles[new_index][0]
+        game.tiles[new_index][0] = temp
+      } else if (game.height === 1 && game.width > 1) {
+        game.reset()
+        const new_index = SwitchTile.randint_factory()(1, game.width - 1)
+        const temp = game.tiles[0][0]
+        game.tiles[0][0] = game.tiles[0][new_index]
+        game.tiles[0][new_index] = temp
+      }
+    }
     game.shuffle(null)
     draw_game(game)
   }
