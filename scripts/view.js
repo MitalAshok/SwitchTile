@@ -36,7 +36,7 @@
   let OPT_DEFAULT_SIZE = +search_or_default('size', 500) || 500
   let OPT_ANIMATED_SHUFFLE_HANDLER // = search_set('anime')
   let OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS // = search_set('mouseselect')
-  let OPT_IMPOSSIBLE = search_set('impossible')
+  let OPT_IMPOSSIBLE = search_set('impossible') || search_set('i')
 
   const DEFAULT_COLOUR_SCHEME = {
     up: '#222222',
