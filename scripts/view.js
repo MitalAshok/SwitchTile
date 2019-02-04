@@ -331,12 +331,14 @@
   */
 
   const game = new SwitchTile(3, 3)
+  const last_shuffle = new SwitchTile(3, 3)
   let selected_y = 0
   let selected_x = 0
   SwitchTile.precache(4, 4)
   SwitchTile.precache(5, 5)
 
   game.deserialise(get_search_key('p'))
+  last_shuffle.set_to(game)
 
   let in_game = false
   let move_counter = 0
@@ -412,10 +414,12 @@
     if (reset_game === SHUFFLE_RESET) {
       if (height !== game.height || width != game.width) {
         game.reset(height, width)
+        last_shuffle.set_to(game)
         shuffled = false
       }
     } if (reset_game) {
       game.reset(height, width)
+      last_shuffle.set_to(game)
       shuffled = false
     }
     if (reset_game != SHUFFLE_RESET || (
@@ -470,6 +474,7 @@
       }
       if (shuffles-- > 0) {
         shuffle()
+        last_shuffle.set_to(game)
         draw_game(game)
       } else {
         clearInterval(id)
@@ -507,6 +512,7 @@
       }
     }
     game.shuffle(null)
+    last_shuffle.set_to(game)
     draw_game(game)
   }
 
@@ -684,6 +690,12 @@
     }
     location.search = search + '&p=' + s
     return
+  }
+
+  window.g = () => {
+    reset(false)
+    game.set_to(last_shuffle)
+    draw_game(game)
   }
 
   function make_images() {
