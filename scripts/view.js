@@ -711,6 +711,12 @@
   window.g = () => {
     reset(false)
     game.set_to(last_shuffle)
+    // If game has not been shuffled, since this is set to `true`, you
+    // can move, even though it is already solved. Allow this.
+    shuffled = true  // !game.check()
+    if (OPT_WIN_GRACE_TIME !== null) {
+      win_timer.set_to(OPT_WIN_GRACE_TIME)
+    }
     draw_game(game)
   }
 
