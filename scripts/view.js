@@ -360,6 +360,7 @@
   let shuffled = false
 
   const SHUFFLE_RESET = (typeof Symbol === 'function' ? Symbol : Object)('SHUFFLE_RESET')
+  const REVERT_RESET = (typeof Symbol === 'function' ? Symbol : Object)('REVERT_RESET')
 
   const prevent_all = e => {
     e.preventDefault()
@@ -398,8 +399,33 @@
     pause_time = null
     hide_stats()
 
-    const width = Math.floor(+inputs.width.value || 3)
-    const height = Math.floor(+inputs.height.value || width)
+    let width = Math.floor(+inputs.width.value || 3)
+    let height = Math.floor(+inputs.height.value || width)
+
+    if (!Number.isSafeInteger(width) || width <= 0) {
+      width = 3
+    }
+    if (!Number.isSafeInteger(height) || height <= 0) {
+      height = width
+    }
+    if (!Number.isSafeInteger(height * width)) {
+      width = height = 3
+    }
+
+    if (reset_game === SHUFFLE_RESET) {
+      if (height !== game.height || width !== game.width) {
+        game.reset(height, width)
+        last_shuffle.set_to(game)
+        shuffled = false
+      }
+    } else if (reset_game === REVERT_RESET) {
+      width = game.width
+      height = game.height
+    } else if (reset_game) {
+      game.reset(height, width)
+      last_shuffle.set_to(game)
+      shuffled = false
+    }
 
     const zoom_inp = +inputs.zoom.value
     if (zoom_inp >= 0.2 && zoom_inp < 100000000000000) {
@@ -412,18 +438,7 @@
 
     set_if_mouse_controls(inputs.mouse.checked)
 
-    if (reset_game === SHUFFLE_RESET) {
-      if (height !== game.height || width !== game.width) {
-        game.reset(height, width)
-        last_shuffle.set_to(game)
-        shuffled = false
-      }
-    } if (reset_game) {
-      game.reset(height, width)
-      last_shuffle.set_to(game)
-      shuffled = false
-    }
-    if (reset_game !== SHUFFLE_RESET || (
+    if ((reset_game !== SHUFFLE_RESET && reset_game !== REVERT_RESET) || (
       selected_y >= height || selected_x >= width ||
       drag_start_y >= height || drag_start_y >= width ||
       drag_y >= height || drag_x >= width
@@ -533,9 +548,10 @@
     shuffled = true
     inputs.height.value = '' + game.height
     inputs.width.value = '' + game.width
+    reset(false)
+  } else {
+    reset(true)
   }
-
-  reset(false)
 
   const positive_mod = (a, b) => ((a % b) + b) % b
 
@@ -709,7 +725,7 @@
   }
 
   window.g = () => {
-    reset(false)
+    reset(REVERT_RESET)
     game.set_to(last_shuffle)
     // If game has not been shuffled, since this is set to `true`, you
     // can move, even though it is already solved. Allow this.
