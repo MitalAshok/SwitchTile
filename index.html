@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <title>SwitchTile</title>
-<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" async="async">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
 <style>
 body {
   background: #EEEEEE;
@@ -70,10 +70,9 @@ body {
 }
 #hover-events {
   display: block;
-  margin: auto;
   padding: 0;
   position: relative;
-  margin-bottom: 1.5em;
+  margin: auto auto 1.5em;
 }
 #hover-events span {
   position: absolute;
@@ -135,10 +134,9 @@ body {
   <h1 id="title">SwitchTile</h1>
   <p>A torus sliding puzzle</p>
   <div id="info">
-    Width: <input type="number" min="1" max="50" step="1" name="width" id="width-input" value="3"><br>
-    Height: <input type="number" min="0" max="50" step="1" name="height" id="height-input" value="0"><br>
-    Zoom: <input type="number" min="0.2" step="0.1" name="zoom" id="zoom-input" value="1"><br>
-    Mouse controls: <input type="checkbox" name="mouse-input" id="mouse-input" checked="checked"><br>
+    <label for="width-input">Width: </label><input type="number" min="1" max="50" step="1" name="width" id="width-input" value="3"><br>
+    <label for="height-input">Height: </label><input type="number" min="0" max="50" step="1" name="height" id="height-input" value="0"><br>
+    <label for="zoom-input">Zoom: </label><input type="number" min="0.2" step="0.1" name="zoom" id="zoom-input" value="1"><br>
     <br>
     <button onclick="window.b()">Reset</button>
     <button onclick="window.s()">Shuffle</button>
@@ -164,10 +162,11 @@ body {
     Always enabled. Just drag a tile to where you want it (horizontally or vertically).<br>
     With your mouse or fingers, like a scrub (in both ways).<br><br>
     <h3>Extras</h3>
-    <input type="checkbox" name="opt-anime" id="opt-anime"> Show animation when shuffling<br>
-    <input type="checkbox" name="opt-mouse-select" id="opt-mouse-select"> Show selection bars in mouse mode<br>
-    <input type="checkbox" name="opt-move" id="opt-move"> When moving in keyboard mode, move the selection with the tiles<br>
-    <input type="checkbox" name="opt-wrap" id="opt-wrap" checked="checked"> In keyboard mode, wrap around the selection<br>
+    <input type="checkbox" name="mouse-input" id="mouse-input" checked="checked"> <label for="mouse-input">Mouse controls</label><br>
+    <input type="checkbox" name="opt-anime" id="opt-anime"> <label for="opt-anime">Show animation when shuffling</label><br>
+    <input type="checkbox" name="opt-mouse-select" id="opt-mouse-select"> <label for="opt-mouse-select">Show selection bars in mouse mode</label><br>
+    <input type="checkbox" name="opt-move" id="opt-move"> <label for="opt-move">When moving in keyboard mode, move the selection with the tiles</label><br>
+    <input type="checkbox" name="opt-wrap" id="opt-wrap" checked="checked"> <label for="opt-wrap">In keyboard mode, wrap around the selection</label><br>
   </div>
   <br><br><br>
 </div>

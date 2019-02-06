@@ -191,12 +191,12 @@
       return this
     }
     equals(other) {
-      if (this.width != other.width || this.height != other.height) {
+      if (this.width !== other.width || this.height !== other.height) {
         return false
       }
       for (let y = 0; y < this.height; ++y) {
         for (let x = 0; x < this.width; ++x) {
-          if (this.tiles[y][x] != other.tiles[y][x]) {
+          if (this.tiles[y][x] !== other.tiles[y][x]) {
             return false
           }
         }
@@ -217,7 +217,7 @@
       while (times-- > 0) {
         const first = rand2dindex(0, height * width - 1)
         const second = rand2dindex(0, height * width - 2)
-        if (second[0] > first[0] || (second[0] == first[0] && second[1] >= second[1])) {
+        if (second[0] > first[0] || (second[0] === first[0] && second[1] >= second[1])) {
           // Increment second by 1
           ; ++second[1]
           if (second[1] === width) {
@@ -361,7 +361,7 @@
         return null
       }
       // Cannot have base 64 string with this length
-      if (serialised.length % 4 == 1) {
+      if (serialised.length % 4 === 1) {
         return null
       }
       // Re add padding

@@ -125,7 +125,7 @@
   options.wrap.addEventListener('change', () => { OPT_WRAP_SELECTION = !!options.wrap.checked }, false)
   options.mouse_select.addEventListener('change', () => {
     OPT_SHOW_SELECTIONS_WHEN_MOUSE_CONTROLS = !!options.mouse_select.checked
-    draw_selection(selected_y, selected_x, width)
+    draw_selection(selected_y, selected_x, game.width)
   }, false)
 
   let currently_animated_shuffling = OPT_ANIMATED_SHUFFLE_HANDLER ? 0 : null
@@ -227,7 +227,7 @@
       const row = switchtile.tiles[y]
       for (let x = 0; x < width; ++x) {
         const tile_value = row[x]
-        let tile = tile_cache[tile_value][(cache_used[tile_value]++ || (cache_used[tile_value] = 1, 0))]
+        let tile = tile_cache[tile_value][(cache_used[tile_value]++ || ((cache_used[tile_value] = 1) - 1))]
         if (first) {
           if (!tile) {
             tile = tile_cache[tile_value][cache_used[tile_value] - 1] = images[tile_value]()
@@ -238,7 +238,7 @@
           'top:' + (margin * (y + 1) + tile_width * y) + 'px;left:' +
           (margin * (x + 1) + tile_width * x) + 'px'
         )
-        if (tile.getAttribute('style') != s) {
+        if (tile.getAttribute('style') !== s) {
           tile.setAttribute('style', s)
         }
         // tile.setAttribute('style', 'top: 5px;left:5px')
@@ -412,7 +412,7 @@
     set_if_mouse_controls(inputs.mouse.checked)
 
     if (reset_game === SHUFFLE_RESET) {
-      if (height !== game.height || width != game.width) {
+      if (height !== game.height || width !== game.width) {
         game.reset(height, width)
         last_shuffle.set_to(game)
         shuffled = false
@@ -422,7 +422,7 @@
       last_shuffle.set_to(game)
       shuffled = false
     }
-    if (reset_game != SHUFFLE_RESET || (
+    if (reset_game !== SHUFFLE_RESET || (
       selected_y >= height || selected_x >= width ||
       drag_start_y >= height || drag_start_y >= width ||
       drag_y >= height || drag_x >= width
@@ -486,7 +486,7 @@
           paused = false
           pause_time = null
           in_game = false
-          moves = 0
+          move_counter = 0
         }
       }
     }, 10)
@@ -522,7 +522,7 @@
     paused = false
     pause_time = null
     in_game = false
-    moves = 0
+    move_counter = 0
     reset(SHUFFLE_RESET)
     ; (OPT_ANIMATED_SHUFFLE_HANDLER ? animated_shuffle_handler : shuffle_handler)()
     shuffled = true
@@ -686,10 +686,9 @@
     const search = location.search.replace(/(?:^\?|&)p(?:=.*)(?:&|$)/g, '')
     if (search === '' || search === '?') {
       location.search = '?p=' + s
-      return
+    } else {
+      location.search = search + '&p=' + s
     }
-    location.search = search + '&p=' + s
-    return
   }
 
   window.g = () => {
@@ -781,7 +780,7 @@
         timer_ms.textContent = ms
         timer_second.textContent = ('0' + s).slice(-2)
         timer_colon.hidden = false
-        timer_minute.textContent = minutes
+        timer_minute.textContent = '' + minutes
       } else {
         timer_ms.textContent = ms
         timer_second.textContent = s
