@@ -7,22 +7,23 @@
     return
   }
 
-  const get_search_key = (location.search === '' || location.search === '?') ? (key => undefined) : (() => {
-    const search = location.search.slice(1).split('&')
-    const mapped = search.reduce(((acc, cur) => {
+  const parse_search = (search = location.search, prefix = '@@') => {
+    search = location.search.slice(1).split('&')
+    return search.reduce(((acc, cur) => {
       const split_index = cur.indexOf('=')
       if (split_index === -1) {
         const key = decodeURIComponent(cur)
-        acc['@@' + key] = null
+        acc[prefix + key] = null
         return acc
       }
-      const key = decodeURIComponent(cur.slice(0, split_index))
-      const value = decodeURIComponent(cur.slice(split_index + 1))
-      acc['@@' + key] = value
+      acc[prefix + decodeURIComponent(cur.slice(0, split_index))] = decodeURIComponent(cur.slice(split_index + 1))
       return acc
     }), {})
-    return key => mapped['@@' + key]
-  })()
+  }
+
+  const get_search_key = (location.search === '' || location.search === '?') ? (key => undefined) : (
+    (mapping => key => mapping['@@' + key])(parse_search())
+  )
 
   const search_not_set = key => get_search_key(key) === undefined
   const search_set = key => get_search_key(key) !== undefined
