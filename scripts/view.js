@@ -573,8 +573,10 @@
     // debugger
     const is_shift = e.getModifierState('Shift')
     let direction
-    switch (e.key) {
+    switch (e.code) {
       case 'ArrowUp':
+      case 'KeyW':
+      case 'KeyI':
         if (is_shift) {
           direction = D
           if (!OPT_MOVE_SELECTION) break
@@ -583,6 +585,8 @@
         selected_y = positive_mod(selected_y - 1, game.height)
         break
       case 'ArrowLeft':
+      case 'KeyA':
+      case 'KeyJ':
         if (is_shift) {
           direction = R
           if (!OPT_MOVE_SELECTION) break
@@ -591,6 +595,8 @@
         selected_x = positive_mod(selected_x - 1, game.width)
         break
       case 'ArrowDown':
+      case 'KeyS':
+      case 'KeyK':
         if (is_shift) {
           direction = U
           if (!OPT_MOVE_SELECTION) break
@@ -599,6 +605,8 @@
         selected_y = (selected_y + 1) % game.height
         break
       case 'ArrowRight':
+      case 'KeyD':
+      case 'KeyL':
         if (is_shift) {
           direction = L
           if (!OPT_MOVE_SELECTION) break
@@ -624,10 +632,18 @@
   const mouse_key_handler = e => {
     const direction = {
       '@@ArrowUp': D,
+      '@@KeyW': D,
+      '@@KeyI': D,
       '@@ArrowLeft': R,
+      '@@KeyA': R,
+      '@@KeyJ': R,
       '@@ArrowDown': U,
-      '@@ArrowRight': L
-    }['@@' + e.key]
+      '@@KeyS': U,
+      '@@KeyK': U,
+      '@@ArrowRight': L,
+      '@@KeyD': L,
+      '@@KeyL': L,
+    }['@@' + e.code]
     if (direction === undefined) return
     on_before_move()
     game.move([selected_x, selected_y], direction)
