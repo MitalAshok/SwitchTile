@@ -207,17 +207,16 @@
       SwitchTile.precache(this.height, this.width)
       return reset_cache[this.height][this.width].equals(this)
     }
-    // method = null is pure random
-    // method = Number is do "method" number of moves
     swap(times = 1, rng = default_rng) {
       const height = this.height
       const width = this.width
       const tiles = this.tiles
       const rand2dindex = rand2dindex_factory(height, width, rng)
+      // debugger
       while (times-- > 0) {
         const first = rand2dindex(0, height * width - 1)
         const second = rand2dindex(0, height * width - 2)
-        if (second[0] > first[0] || (second[0] === first[0] && second[1] >= second[1])) {
+        if (second[0] > first[0] || (second[0] === first[0] && second[1] >= first[1])) {
           // Increment second by 1
           ; ++second[1]
           if (second[1] === width) {
@@ -230,6 +229,9 @@
         tiles[second[0]][second[1]] = temp
       }
     }
+
+    // method = null is pure random
+    // method = Number is do "method" number of moves
     shuffle(method = null, rng = default_rng) {
       if (method === null) {
         const height = this.height
@@ -245,23 +247,7 @@
         }
         const parity = shuffle_2d_array(tiles, height, width, rng) % 2
         if (height === 3 && width === 3 && parity === 1) {
-          /*
           // Parity correction; Swap 1 more to have an even parity
-          const rand2dindex = rand2dindex_factory(height, width, rng)
-          const first = rand2dindex(0, height * width - 1)
-          const second = rand2dindex(0, height * width - 2)
-          if (second[0] > first[0] || (second[0] == first[0] && second[1] >= second[1])) {
-            // Increment second by 1
-            ; ++second[1]
-            if (second[1] === width) {
-              second[1] = 0
-              ; ++second[0]
-            }
-          }
-          const temp = tiles[first[0]][first[1]]
-          tiles[first[0]][first[1]] = tiles[second[0]][second[1]]
-          tiles[second[0]][second[1]] = temp
-          */
           this.swap(1, rng)
         }
         return this
@@ -272,6 +258,84 @@
         }
         return this
       }
+    }
+    is_solvable() {
+      const height = this.height
+      const width = this.width
+      const tiles = this.tiles
+      if (height === 1 || width === 1) {
+        if ((height === 1 && width <= 1) || (width === 1 && height <= 1)) {
+          return true;
+        }
+        const is_wide = height === 1
+        const lesser_tile = is_wide ? UP_DOWN_LEFT_TILE : UP_LEFT_RIGHT_TILE
+        const greater_tile = is_wide ? UP_DOWN_RIGHT_TILE : DOWN_LEFT_RIGHT_TILE
+        const filler_tile = is_wide ? UP_DOWN_TILE : LEFT_RIGHT_TILE
+        let lesser_index = null
+        let greater_index = null
+        const end = is_wide ? width : height
+        for (let i = 0; i < end; ++i) {
+          const tile = is_wide ? tiles[0][i] : tiles[i][0]
+          switch (tile) {
+            case lesser_tile:
+              if (lesser_index !== null) return false
+              lesser_index = i
+              break
+            case greater_tile:
+              if (greater_index !== null) return false
+              greater_index = i
+              break
+            case filler_tile:
+              break
+            default:
+              return false
+          }
+        }
+        if (greater_index === null || lesser_index === null) {
+          return false
+        }
+        return (lesser_index + 1) % end === greater_index
+      }
+      SwitchTile.precache(height, width)
+      if (width !== 3 || height !== 3) {
+        const solved = reset_cache[height][width]
+        const tile_count = Array(ALL_TILE + 1)
+        for (let i = 0; i <= ALL_TILE; ++i) {
+          tile_count[i] = 0
+        }
+        for (let y = 0; y < height; ++y) {
+          for (let x = 0; x < width; ++x) {
+            ; --tile_count[tiles[y][x]]
+            ; ++tile_count[solved[y][x]]
+          }
+        }
+        for (let i = 0; i <= ALL_TILE; ++i) {
+          if (tile_count[i] !== 0) {
+            return false
+          }
+        }
+        return true
+      }
+      const solved = reset_cache[3][3].tiles
+      const take_three = arr => (arr ? [arr[0], arr[1], arr[2]] : [undefined, undefined, undefined])
+      const to_check = take_three(tiles[0]).concat(take_three(tiles[1])).concat(take_three(tiles[2]))
+      let n_swaps = 0
+      for (let y = 0; y < 3; ++y) {
+        for (let x = 0; x < 3; ++x) {
+          const correct_value = solved[y][x]
+          const linear_index = y * 3 + x
+          const correct_index = to_check.indexOf(correct_value, linear_index)
+          if (correct_index === -1) {
+            return false
+          }
+          if (correct_index !== linear_index) {
+            to_check[correct_index] = to_check[linear_index]
+            to_check[linear_index] = correct_value
+            ; ++n_swaps
+          }
+        }
+      }
+      return n_swaps % 2 === 0
     }
     get_shuffler(rng = default_rng) {
       const rand2dindex = rand2dindex_factory(this.height, this.width, rng)
